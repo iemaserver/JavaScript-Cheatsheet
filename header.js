@@ -22,7 +22,7 @@ document.write(`
         >
           <a
             class="flex title-font font-medium items-center text-gray-900 mb-4 md:mb-0"
-            href="/"
+            href="/JavaScript-Cheatsheet"
           >
             <span class="logo h-16 w-16 flex justify-center items-center"
               ><img src="copy.svg" alt="logo"
