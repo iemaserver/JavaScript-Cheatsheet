@@ -2,7 +2,7 @@
 <div class="flex w-11/12 lg:w-4/6 justify-center items-center">
   <ol class="w-full self-center">
     <li>
-      <b>POST Request :  </b> SignUp Logic
+      <b>POST Request :  </b> User SignUp Logic
       <pre class="language-js"><code>
         exports.postSignup = async (req, res) => {
             try {
@@ -36,5 +36,230 @@
           }
       </code></pre>
     </li>
+    <li>
+        <b>POST Request :  </b> User Login Logic
+        <pre class="language-js"><code>
+            exports.postLogin = async (req, res) => {
+                try {
+                  const { email, password } = req.body
+                  if (!email || !password) {
+                    throw new Error("All the fields are required!")
+                  }
+              
+                  const admin = await Admin.findOne({ email })
+                  if (!admin || !(await bcryptjs.compare(password, admin.password))) {
+                    return res
+                      .status(400)
+                      .json({ success: false, message: "Invalid Credentials" })
+                  }
+              
+                  const token = await generateAuthToken(admin._id, "admin")
+                  res.status(200).json({
+                    token,
+                    success: true,
+                    message: "Admin logged in successfully",
+                  })
+                } catch (err) {
+                  console.error(err)
+                  res.status(500).json({ success: false, message: err.message })
+                }
+              }
+        </code></pre>
+      </li>
+      <li>
+        <b>POST Request :  </b> User Delete Logic
+        <pre class="language-js"><code>
+            exports.userDelete = async (req, res) => {
+                try {
+                  const { email } = req.body
+                  const userId = req.user.id
+                  const user = await User.findById(userId)
+                  if (user.email === email) {
+                    await Promise.all([
+                      Progress.findOneAndDelete({ userId }),
+                      User.deleteOne({ _id: userId }),
+                    ])
+                    return res
+                      .status(200)
+                      .json({ success: true, message: "User deleted successfully" })
+                  } else {
+                    return res.status(429).json({
+                      success: false,
+                      message: "Email entered is different from email registered",
+                    })
+                  }
+                } catch (err) {
+                  console.error(err)
+                  res.status(500).json({ success: false, message: err.message })
+                }
+              }
+        </code></pre>
+      </li>
+      <li>
+        <b>POST Request :  </b> User Forget Password and OTP send and Verify Logic
+        <pre class="language-js"><code>
+            const isEmail = (identifier) =>
+            typeof identifier === "string" && identifier.includes("@")
+          const isMobileNumber = (identifier) => /^(\+91)?[1-9][0-9]{9}$/.test(identifier)
+          
+          exports.postForgetPassword = async (req, res) => {
+            const { identifier } = req.body
+            try {
+              let user
+              if (isEmail(identifier)) {
+                user = await User.findOne({ email: identifier })
+              } else if (isMobileNumber(identifier)) {
+                user = await User.findOne({ mobileNumber: "+91" + identifier })
+              } else {
+                return res
+                  .status(400)
+                  .json({ success: false, message: "Invalid identifier" })
+              }
+          
+              if (!user) {
+                return res.status(404).json({
+                  success: false,
+                  message: isEmail(identifier)
+                    ? "Email not found...!!"
+                    : "Mobile number not found",
+                })
+              }
+          
+              const otpCode = Math.floor(100000 + Math.random() * 900000).toString()
+              await (isEmail(identifier)
+                ? sendbyEmail(identifier, otpCode)
+                : sendOtp("+91" + identifier, otpCode))
+              await OTP.create({ user: user._id, code: otpCode })
+          
+              return res
+                .status(200)
+                .json({ success: true, message: "OTP sent successfully" })
+            } catch (err) {
+              console.error("Error sending OTP:", err.message)
+              return res
+                .status(500)
+                .json({ success: false, message: err.message })
+            }
+          }
+          
+          /**
+           * @description User otp verification
+           * @route POST /api/auth/verify-otp
+           * @access Public
+           */
+          exports.postVerifyOtp = async (req, res) => {
+            try {
+              const { identifier, otpCode } = req.body
+              const user = await User.findOne({
+                $or: [{ email: identifier }, { mobileNumber: "+91" + identifier }],
+              })
+              if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" })
+              }
+              const isOTPVerified = await OTP.verifyOTP(user._id, otpCode)
+              if (!isOTPVerified) {
+                return res.status(400).json({ success: false, message: "Invalid OTP" })
+              }
+              await OTP.findOneAndUpdate(
+                { user: user._id },
+                { $set: { isVerified: true } }
+              )
+              res
+                .status(200)
+                .json({ success: true, message: "OTP Verified successfully" })
+            } catch (err) {
+              console.error(err)
+              res.status(500).json({ success: false, message: "Internal server error" })
+            }
+          }
+          
+          /**
+           * @description Password reset
+           * @route POST /api/auth/change-password
+           * @access Public
+           */
+          
+          exports.postChangePassword = async (req, res) => {
+            try {
+              const { identifier, newPassword } = req.body
+              const user = await User.findOne({
+                $or: [{ email: identifier }, { mobileNumber: "+91" + identifier }],
+              })
+              if (!user) {
+                return res.status(404).json({ success: false, message: "User not found" })
+              }
+              const otp = await OTP.findOne({ user: user._id, isVerified: true })
+              if (!otp) {
+                return res
+                  .status(400)
+                  .json({ success: false, message: "OTP not verified" })
+              }
+              user.password = newPassword
+              await user.save()
+              res
+                .status(200)
+                .json({ success: true, message: "Password Reset Successful" })
+            } catch (err) {
+              console.error(err)
+              res.status(500).json({ success: false, message: "Internal Server Error" })
+            }
+          }
+        </code></pre>
+      </li>
+      <li>
+        <b>PUT Request :  </b> User Profile Update Logic
+        <pre class="language-js"><code>
+            exports.updateUserProfile = async (req, res,next) => { 
+                try {
+                  // console.log(req.file);
+                  const userId = req.user.id
+                  const user = await User.findById(userId)
+                  if (!user) {
+                    return res.status(401).json({
+                      success: false,
+                      message: "Unauthorized... Require Authorization !! ",
+                    })
+                  }
+              
+                  // If a profile photo is uploaded, update it
+                  if (req.file) {
+                    user.profilePhoto = req.file.path
+                  }
+                  await user.save()
+                  return res.status(200).json({success:true, message: "Profile updated successfully" })
+                } catch (err) {
+                  console.error(err)
+                  return res.status(500).json({success:false, message: "Severe : Coudn't update profile image" })
+                }
+              }
+        </code></pre>
+      </li>
+      <li>
+        <b>PATCH Request :  </b> User Reset Password Logic
+        <pre class="language-js"><code>
+            exports.resetPassword = async (req, res) => {
+                try {
+                  const { oldPassword, newPassword } = req.body;
+                  const userId = req.user.id
+                  const user = await User.findById(userId)
+                  if (!user) {
+                    return res.status(404).json({ success:false,error: 'User not found' });
+                  }
+                  const isMatch = await bcryptjs.compare(oldPassword, user.password);
+                  if (!isMatch) {
+                    return res.status(401).json({success:false, error: 'Old password does not match' });
+                  }
+                  faculty.password = newPassword;
+                  await faculty.save();
+              
+                  return res.status(200).json({success:true, message: 'Password updated successfully' });
+                } catch (err) {
+                  console.error(err);
+                  res.status(500).json({ success:false,error: 'Internal server error' });
+                }
+              }
+              
+        </code></pre>
+      </li>
   </ol>
 </div>
