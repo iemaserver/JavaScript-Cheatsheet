@@ -1,2 +1,40 @@
 <script src="header.js"></script>
-<!-- Write your snippets here -->
+<div class="flex w-11/12 lg:w-4/6 justify-center items-center">
+  <ol class="w-full self-center">
+    <li>
+      <b>POST Request :  </b> SignUp Logic
+      <pre class="language-js"><code>
+        exports.postSignup = async (req, res) => {
+            try {
+              const { name, email, password } = req.body
+              if (!name || !email || !password) {
+                throw new Error("All the fields are required !!!!")
+              }
+              let admin = await Admin.findOne({ email: email })
+              if (admin) {
+                return res.status(301).json({
+                  success: false,
+                  message: "Admin already exists",
+                })
+              }
+              admin = new Admin({
+                name,
+                email,
+                password,
+              })
+              await admin.save()
+              const token = await generateAuthToken(admin._id, "admin")
+              res.status(201).json({
+                token,
+                success: true,
+                message: "Admin Created successfully",
+              })
+            } catch (err) {
+              console.error(err.message)
+              return res.status(500).json({ success: false, message: err.message })
+            }
+          }
+      </code></pre>
+    </li>
+  </ol>
+</div>
