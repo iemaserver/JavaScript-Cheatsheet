@@ -1,0 +1,32 @@
+<script src="header.js"></script>
+<div class="flex w-11/12 lg:w-4/6 justify-center items-center">
+  <ol class="w-full self-center">
+    <li>
+      <b>Get Request: </b> UseHttp Custom Hook
+      <pre class="language-js"><code>
+        const getRequest = async (endPoint, token = null) => {
+            setLoading(true);
+            setError(null);
+        
+            const apiUrl = `${domain}${endPoint}`;
+        
+            const config = {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            };
+        
+            try {
+              const response = await fetch(apiUrl, config);
+              const data = await response.json();
+              setLoading(false);
+              return data;
+            } catch (err) {
+              setError(err.message);
+              setLoading(false);
+            }
+          };
+      </code></pre>
+    </li>
+  </ol>
+</div>
