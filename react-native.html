@@ -28,8 +28,6 @@
           };
       </code></pre>
     </li>
-     
-
 
     <li>
       <b>Post Request: </b> UseHttp Custom Hook
@@ -178,8 +176,8 @@
     </li>
 
     <li>
-        <b>Get Profile Picture: </b> Profile Picture Function
-        <pre class="language-js"><code>
+      <b>Get Profile Picture: </b> Profile Picture Function
+      <pre class="language-js"><code>
             const fetchUserData = async () => {
                 try {
                   const token = await AsyncStorage.getItem("token");
@@ -206,10 +204,10 @@
                 }
               };
         </code></pre>
-      </li>
-      <li>
-        <b>Save Profile Picture: </b> Save Profile Picture Function
-        <pre class="language-js"><code>
+    </li>
+    <li>
+      <b>Save Profile Picture: </b> Save Profile Picture Function
+      <pre class="language-js"><code>
             const saveImageUri = async (uri) => {
                 try {
                   const token = await AsyncStorage.getItem("token");
@@ -260,10 +258,10 @@
                 }
               };
         </code></pre>
-      </li>
-      <li>
-        <b>Reset Password: </b> Reset Password Function
-        <pre class="language-js"><code>
+    </li>
+    <li>
+      <b>Reset Password Modal: </b> Reset Password Modal Function
+      <pre class="language-js"><code>
             const resetPasswordHandler = async () => {
                 const token = await AsyncStorage.getItem("token");
                 const response = await patchRequest(
@@ -284,10 +282,10 @@
                 }
               };
         </code></pre>
-      </li>
-      <li>
-        <b>Delete Profile: </b> Delete Profile Function
-        <pre class="language-js"><code>
+    </li>
+    <li>
+      <b>Delete Profile: </b> Delete Profile Function
+      <pre class="language-js"><code>
             const deleteProfileHandler = async () => {
                 try {
                   setLoading(true); // Start loading
@@ -316,6 +314,458 @@
                 }
               };
         </code></pre>
-      </li>
+    </li>
+    <li>
+      <b>Sign Up: </b> Sign Up and store details Function
+      <pre class="language-js">
+          <code>
+            async function handleSubmit(values) {
+              try {
+                const endpoint = "/auth/signup"; // Endpoint to send the request
+                const response = await postRequest(endpoint, values); // Call postRequest with the endpoint
+                if (response.success) {
+                  // If response.success is true, set token in AsyncStorage
+                  await AsyncStorage.setItem("token", response.token);
+          
+                  // Update state or do whatever you want with the response
+                  setIsLoggedIn(true);
+                } else {
+                  Alert.alert("Message", response.message);
+                  // Handle error if success key is not true
+                  console.error("Signup failed:", response.error); // Assuming there's an error key in the response
+                  // You can set an error state or show an error message to the user
+                }
+              } catch (error) {
+                Alert.alert("Message", response.message);
+                console.error("Error while signing up:", error.message);
+                // Handle other errors such as network errors
+              }
+            }
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Login: </b> Login Function
+      <pre class="language-js">
+          <code>
+            async function submitHandler(values) {
+              try {
+                const endpoint = "/auth/login"; // Endpoint to send the request
+          
+                const response = await postRequest(endpoint, values); 
+                //console.log("Response:", response);
+                // Call postRequest with the endpoint
+                if (response.success) {
+                  // If response.success is true, set token in AsyncStorage
+                  await AsyncStorage.setItem("token", response.token);
+          
+                  // Update state or do whatever you want with the response
+                  setIsLoggedIn(true);
+                  
+                } else {
+                  // Handle error if success key is not true
+                  Alert.alert("Message", response.message);
+                  console.error("Signup failed:", response.error); // Assuming there's an error key in the response
+                  // You can set an error state or show an error message to the user
+                  //console.log("Response:");
+                }
+              } catch (error) {
+                Alert.alert("Message", "Network error, check your internet connection.");
+                console.error("Error while signing up:", error.message);
+                // Handle other errors such as network errors
+              }
+            }
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Forget Password: </b> Forget Password Function
+      <pre class="language-js">
+          <code>
+            const handleResetPassword = async () => {
+              const response = await postRequest("/auth/forget-password", {
+                identifier: identifier,
+              });
+              // console.log(response);
+              Alert.alert("Message",response.message);
+              if (!response.success) {      
+                setError(response.message);
+              } else {
+                navigation.navigate("GetOTP", { identifier });
+              }
+            };
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Get OTP: </b> Get OTP Function
+      <pre class="language-js">
+          <code>
+            const validateOtp = async () => {
+              try {
+                const response = await postRequest("/auth/verify-otp", {
+                  identifier,
+                  otpCode: userInput,
+                });
+                if (!response.success) {
+                  setError(response.message);
+                } else {
+                  navigation.navigate("ResetPassword", { identifier });
+                }
+              } catch (error) {}
+            };
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Reset Password: </b> Reset Password Function
+      <pre class="language-js">
+          <code>
+            const checkPassword = async () => {
+              if(newPassword !== confirmPassword){
+                Alert.alert("New password and confirm password do not match.")
+              }
+              else{ try {
+                const response = await postRequest("/auth/change-password", {
+                  identifier,
+                  newPassword,
+                });
+                // console.log(response);
+                if (!response.success) {
+                  Alert.alert("Message", response.message); 
+                  setError(response.message);
+                } else {
+                  Alert.alert("Message", response.message);
+                  navigation.navigate("Login");
+                }
+              } catch (error) {}
+            };
+          }
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Open instructions modal and navigate to PassageScreen: </b> Functions
+      to open instructions modal and navigate to the PassageScreen 
+      <pre class="language-js">
+          <code>
+            // Function to handle opening the instructions modal
+            const handleInstructions = async () => {
+              await getPassage();
+              if (instructions) {
+                setModalVisible(true); // Set modalVisible state to true
+              }
+            };
+
+            const getPassage = async () => {
+              const token = await AsyncStorage.getItem("token");
+              const response = await getRequest(
+                `/exam/module${module}/level${level}/questions`,
+                token
+              );
+              setInstructions(response.instructions);
+              setFirstPassage(response.passage);
+              if (module === 3) {
+                setSecondPassage(response.passage2);
+              }
+            };
+
+            // Function to navigate to the PassageScreen
+            const handlePassage = async () => {
+              // Navigate to the passage screen component
+              await getPassage();
+              if (firstPassage) {
+                navigation.navigate("Passage", { passage: firstPassage });
+              }
+            };
+            // Function to navigate to the PassageScreen
+            const handleSecondPassage = async () => {
+              // Navigate to the passage screen component
+              await getPassage();
+              if (secondPassage) {
+                navigation.navigate("Passage", { passage: secondPassage });
+              }
+            };
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Fetching Questions and enabling submission state: </b> Fetching Questions and enabling submission state function
+      <pre class="language-js">
+          <code>
+            useEffect(() => {
+              const fetchQuestions = async () => {
+                try {
+                  const token = await AsyncStorage.getItem("token");
+                  const response = await getRequest(
+                    `/exam/module${module}/level${level}/questions`,
+                    token
+                  );
+                  // console.log(response.totaltime);
+                  setTimerVariable(response.totaltime);
+                  setQuestions(response);
+                  setLoading(false);
+                } catch (error) {
+                  console.error("Error fetching questions:", error);
+                }
+              };
+          
+              fetchQuestions();
+            }, []);
+
+            useEffect(() => {
+              if (
+                questions.questions &&
+                currentQuestion === questions.questions.length - 1
+              ) {
+                setIsReadyToSubmit(true);
+              } else {
+                setIsReadyToSubmit(false);
+              }
+            }, [currentQuestion, questions]);
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Mapping Questions and Answers: </b> Mapping Questions and Answers Function
+      <pre class="language-js">
+          <code>
+            function handleAnswers(id, optionKey) {
+              // Check if there's an existing answer for the given id
+              const existingAnswerIndex = answers.findIndex(
+                (answer) => Object.keys(answer)[0] == id
+              );
+              // If there's no existing answer for the given id, add a new object to the answers array
+              if (existingAnswerIndex === -1) {
+                // Add a new object to the answers array
+                setAnswers((prevAnswers) => {
+                  const updatedAnswers = [...prevAnswers, { [id]: optionKey }];
+                  return updatedAnswers;
+                });
+              } else {
+                // If there's an existing answer, update its value
+                setAnswers((prevAnswers) => {
+                  const updatedAnswers = [...prevAnswers];
+                  updatedAnswers[existingAnswerIndex][id] = optionKey;
+                  return updatedAnswers;
+                });
+              }
+              setSelectedOption((prevSelectedOption) => ({
+                ...prevSelectedOption,
+                [id]: optionKey,
+              }));
+            }
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Clear Selected Answer: </b> Clear Selected Answer Function
+      <pre class="language-js">
+          <code>
+            function handleClear(id) {
+              // Filter out the answer with the given id from the answers array
+              const filteredAnswers = answers.filter(
+                (answer) => Object.keys(answer)[0] !== id.toString()
+              );
+              setAnswers(filteredAnswers);
+              // Also clear the selected option for the given id
+              setSelectedOption((prevSelectedOption) => {
+                const updatedSelectedOption = { ...prevSelectedOption };
+                delete updatedSelectedOption[id];
+                return updatedSelectedOption;
+              });
+            }
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Submit Answers: </b> Submit Answers Function
+      <pre class="language-js">
+          <code>
+            const submitHandler = async () => {
+              try {
+                const token = await AsyncStorage.getItem("token");
+                const response = await postRequest(
+                  `/exam/module${module}/level${level}/submit`,
+                  { answers },
+                  token
+                );
+                //console.log(response);
+                const { score } = response;
+          
+                Alert.alert(`Score: ${score}`, response.message);
+                setIsTestRunning(false);
+          
+                setSelectedOption({}); // Reset selectedOption state to clear the blue selection
+          
+                // Reset answers state
+                setAnswers([]);
+              } catch (error) {
+                console.error("Error submitting answers:", error);
+              }
+            };
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Check for Module progress and Questions level: </b>Check for Module progress and Questions level Function
+      <pre class="language-js">
+          <code>
+            // Function to check if current module's level 1 is completed and level 2 is not completed
+            const isCurrentModuleLevel1Completed = () => {
+              const currentModuleProgress = progress?.[`module${module}`];
+              return currentModuleProgress?.level1?.isLevelCompleted;
+            };
+
+            // Function to check if current module's level 2 is not completed
+            const isCurrentModuleLevel2NotCompleted = () => {
+              const currentModuleProgress = progress?.[`module${module}`];
+              return !currentModuleProgress?.level2?.isLevelCompleted;
+            };
+
+            // Function to fetch progress and questions level
+            const fetchData = async () => {
+              try {
+                const token = await AsyncStorage.getItem("token");
+                const progressResponse = await getRequest("/exam/progress", token);
+                const questionsResponse = await getRequest(
+                  `/exam/${module}/level1/questions`,
+                  token
+                );
+
+                setProgress(progressResponse.progress); // Update to set the progress properly
+                setLevelInfo({
+                  level1NumberOfQuestions: questionsResponse?.questions?.length,
+                  level1Time: questionsResponse?.totaltime,
+                  level2NumberOfQuestions: questionsResponse?.l2numberofQuestion,
+                  level2Time: questionsResponse?.l2totalTime,
+                });
+                setLoading(false);
+              } catch (error) {
+                console.error("Error fetching data: ", error);
+                setLoading(false);
+              }
+            };
+
+            useEffect(() => {
+              fetchData();
+            }, []);
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Audio component : </b>Audio component Function
+      <pre class="language-js">
+          <code>
+            useEffect(() => {
+              if (isActive && !isPlaying) {
+                handlePlayPause();
+              } else if (!isActive && isPlaying) {
+                handlePlayPause();
+              }
+            }, [isActive]);
+          
+            useEffect(() => {
+              return () => {
+                if (sound) {
+                  sound.stopAsync();
+                }
+              };
+            }, []);
+          
+            const loadSound = async () => {
+              try {
+                const { sound, status } = await Audio.Sound.createAsync(
+                  { uri },
+                  { shouldPlay: false }
+                );
+                setSound(sound);
+                sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+                setDuration(status.durationMillis);
+              } catch (error) {
+                console.error("Error loading sound:", error);
+              }
+            };
+          
+            const onPlaybackStatusUpdate = (status) => {
+              if (status.isLoaded) {
+                setPosition(status.positionMillis);
+                setIsPlaying(status.isPlaying);
+                if (
+                  !status.isPlaying &&
+                  status.positionMillis === status.durationMillis
+                ) {
+                  setPosition(0); // Reset position to 0 when audio finishes playing
+                }
+              }
+            };
+          
+            const handlePlayPause = async () => {
+              try {
+                if (!sound) return;
+                if (isPlaying) {
+                  await sound.pauseAsync();
+                  setIsPlaying(false);
+                  setPosition(0); // Reset position to 0 when audio is paused
+                } else {
+                  stopCurrentSound(); // Stop any currently playing audio
+                  await sound.playAsync();
+                  setIsPlaying(true);
+                }
+              } catch (error) {
+                console.error("Error toggling play:", error);
+              }
+            };
+          
+            const handleTogglePlay = () => {
+              onTogglePlay();
+            };
+          </code>
+        </pre>
+    </li>
+    <li>
+      <b>Timer component : </b>Timer component Function
+      <pre class="language-js">
+          <code>
+            useEffect(() => {
+              let timerID;
+          
+              if (status === 1) {
+                timerID = setInterval(() => {
+                  setTime((prevTime) => {
+                    if (prevTime <= 0) {
+                      clearInterval(timerID);
+                      setStatus(-1);
+                      onTimerEnd();
+                      return 0;
+                    } else if (prevTime <= 30000 && !showAlertRef.current) {
+                      showAlertRef.current = true;
+                      showAlert();
+                    }
+          
+                    return prevTime - 20;
+                  });
+                }, 20);
+              }
+          
+              return () => {
+                clearInterval(timerID);
+              };
+            }, [status, stopTimer]); // Add stopTimer to dependencies
+          
+            useEffect(() => {
+              // Stop the timer when stopTimer is true
+              if (stopTimer) {
+                clearInterval(timerID);
+                setStatus(-1);
+              }
+            }, [stopTimer]);
+          
+            const showAlert = () => {
+              Alert.alert("Warning!", "Last 20 seconds left!");
+            };
+          </code>
+        </pre>
+    </li>
   </ol>
 </div>
