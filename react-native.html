@@ -1,2 +1,321 @@
 <script src="header.js"></script>
-<!-- Write your snippets here -->
+<div class="flex w-11/12 lg:w-4/6 justify-center items-center">
+  <ol class="w-full self-center">
+    <li>
+      <b>Get Request: </b> UseHttp Custom Hook
+      <pre class="language-js"><code>
+        const getRequest = async (endPoint, token = null) => {
+            setLoading(true);
+            setError(null);
+        
+            const apiUrl = `${domain}${endPoint}`;
+        
+            const config = {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            };
+        
+            try {
+              const response = await fetch(apiUrl, config);
+              const data = await response.json();
+              setLoading(false);
+              return data;
+            } catch (err) {
+              setError(err.message);
+              setLoading(false);
+            }
+          };
+      </code></pre>
+    </li>
+     
+
+
+    <li>
+      <b>Post Request: </b> UseHttp Custom Hook
+      <pre class="language-js"><code>
+        const postRequest = async (endPoint, body, token = null) => {
+          // setLoading(true);
+          // setError(null);
+      
+          const apiUrl = `${domain}${endPoint}`;
+      
+          const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          };
+      
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+      
+          const config = {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body),
+          };
+          try {
+            const response = await fetch(apiUrl, config);
+            if (response.status === 403) {
+              await AsyncStorage.clear();
+              setIsLoggedIn(false);
+              return;
+            }
+            const data = await response.json();
+            setLoading(false);
+            return data;
+          } catch (err) {
+            setError(err.message);
+            setLoading(false);
+          }
+        };
+      </code></pre>
+    </li>
+    <li>
+      <b>Patch Request: </b> UseHttp Custom Hook
+      <pre class="language-js"><code>
+        const patchRequest = async (endPoint, body, token = null) => {
+          const apiUrl = `${domain}${endPoint}`;
+      
+          const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          };
+      
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+      
+          const config = {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify(body),
+          };
+          try {
+            const response = await fetch(apiUrl, config);
+            if (response.status === 403) {
+              await AsyncStorage.clear();
+              setIsLoggedIn(false);
+              return;
+            }
+            const data = await response.json();
+            setLoading(false);
+            return data;
+          } catch (err) {
+            setError(err.message);
+            setLoading(false);
+          }
+        };
+      </code></pre>
+    </li>
+
+    <li>
+      <b>Delete Request: </b> UseHttp Custom Hook
+      <pre class="language-js"><code>
+        const deleteRequest = async (endPoint, body, token = null) => {
+          setLoading(true);
+          setError(null);
+      
+          const apiUrl = `${domain}${endPoint}`;
+          const headers = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          };
+      
+          if (token) {
+            headers.Authorization = `Bearer ${token}`;
+          }
+      
+          const config = {
+            method: "DELETE",
+            headers,
+            body: JSON.stringify(body),
+          };
+      
+          try {
+            const response = await fetch(apiUrl, config);
+            if (response.status === 403) {
+              await AsyncStorage.clear();
+              setIsLoggedIn(false);
+              return;
+            }
+            const data = await response.json();
+            setLoading(false);
+            return data;
+          } catch (err) {
+            setError(err.message);
+            setLoading(false);
+          }
+        };
+      </code></pre>
+    </li>
+
+    <li>
+      <b>Download Certificate: </b> Download Function
+      <pre class="language-js"><code>
+        const handleShare = async () => {
+          try {
+            // If the PDF URL is not yet fetched, fetch it
+            const token = await AsyncStorage.getItem("token");
+            const response = await getRequest("/exam/getcertificate", token);
+            console.log(response.certificate)
+            const certUrl = `https://ielts-iema.iemamerica.com/${response.certificate}`;
+        
+            // Download the certificate
+            const certAsset = Asset.fromURI(certUrl);
+            await certAsset.downloadAsync();
+        
+            // Print the certificate
+            await printAsync({ uri: certAsset.localUri });
+        
+            console.log(certUrl); // Logging the certificate URL for debugging
+        
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        };
+      </code></pre>
+    </li>
+
+    <li>
+        <b>Get Profile Picture: </b> Profile Picture Function
+        <pre class="language-js"><code>
+            const fetchUserData = async () => {
+                try {
+                  const token = await AsyncStorage.getItem("token");
+                  const response = await getRequest("/exam/progress", token);
+                  // console.log("Response", response);
+                  // console.log(response);
+                  if (!response.success) {
+                    throw new Error("Failed to fetch user data");
+                  }
+                  const { user } = response;
+                  setUserData(user);
+          //console.log(user.profilePhoto)
+                  // Set the profile picture URI from the fetched user data
+                  if (user && user.profilePhoto) {
+                    // Assuming that profilePhoto is the URL of the image
+                    // console.log(user.profilePhoto)
+                    setImageUri(`https://ielts-iema.iemamerica.com/${user.profilePhoto}`);
+                  }
+          
+                } catch (error) {
+                  console.error("Error fetching user data:", error.message);
+                } finally {
+                  setLoading(false);
+                }
+              };
+        </code></pre>
+      </li>
+      <li>
+        <b>Save Profile Picture: </b> Save Profile Picture Function
+        <pre class="language-js"><code>
+            const saveImageUri = async (uri) => {
+                try {
+                  const token = await AsyncStorage.getItem("token");
+                  const endpoint =
+                    "https://ielts-iema.iemamerica.com/api/auth/update-profile";
+            
+                  if (!uri) {
+                    // console.log("Response", response.message);
+                    console.error("No image selected");
+                    return;
+                  }
+            
+                  const formData = new FormData();
+                  formData.append("profilePhoto", {
+                    uri: uri,
+                    type: "image/jpeg",
+                    name: "profilePhoto.jpg",
+                  });
+            
+                  const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                      Accept: "application/json",
+                      "Content-Type": "multipart/form-data",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: formData,
+                  });
+                  //console.log(response.message);
+                  // console.log("Status Text:", response.success); 
+                  const responseText = await response.text();
+                  // console.log("Response status:", response.status);
+                  // console.log("Response text:", responseText);
+            
+                  if (response.ok) {
+                    // console.log("Response:", response);
+                    // console.log("Profile Image updated successfully");
+                    await AsyncStorage.setItem("profileImageUri", uri);
+                  } else {
+                    // console.error("Failed to update Profile Picture");
+                    Alert.alert(
+                      "Failed to update Profile Picture. Please try again later."
+                    );
+                  }
+                } catch (error) {
+                  // console.error("Error Updating Image:", error.message);
+                  Alert.alert("Error Updating Image. Please try again later.");
+                }
+              };
+        </code></pre>
+      </li>
+      <li>
+        <b>Reset Password: </b> Reset Password Function
+        <pre class="language-js"><code>
+            const resetPasswordHandler = async () => {
+                const token = await AsyncStorage.getItem("token");
+                const response = await patchRequest(
+                  "/auth/reset-password",
+                  { oldPassword: oldPass, newPassword: newPass },
+                  token
+                );
+                //console.log(response)
+                if (!response.success) {
+                  Alert.alert("Message", response.error);
+                  setError(response.message);
+                } else {
+                  Alert.alert("Message", response.message);
+                  setOldPass("");
+                  setNewPass("");
+                  setResetModalVisible(!resetModalVisible);
+                  setIsLoggedIn(false);
+                }
+              };
+        </code></pre>
+      </li>
+      <li>
+        <b>Delete Profile: </b> Delete Profile Function
+        <pre class="language-js"><code>
+            const deleteProfileHandler = async () => {
+                try {
+                  setLoading(true); // Start loading
+            
+                  const token = await AsyncStorage.getItem("token");
+            
+                  // Check if deleteEmail exists
+            
+                  const endpoint = "/auth/delete";
+            
+                  const response = await deleteRequest(endpoint, { email: deleteEmail }, token);
+            
+                  if (response && response.success) {
+                    Alert.alert("Message", response.message);
+                    await AsyncStorage.clear();
+                    setIsLoggedIn(false);
+                    // console.log("Account deleted successfully!");
+                  } else {
+                    Alert.alert("Message", response.message);
+                    //Alert.alert("Email does not exist", "Please provide a valid email address.");
+                  }
+                } catch (error) {
+                  console.error("Error deleting account:", error.message);
+                } finally {
+                  setLoading(false); // Stop loading
+                }
+              };
+        </code></pre>
+      </li>
+  </ol>
+</div>
